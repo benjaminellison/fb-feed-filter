@@ -84,4 +84,108 @@ resetBtn.addEventListener("click", () => {
   });
 });
 
+const queueList = document.getElementById("queue-list");
+const queueEmpty = document.getElementById("queue-empty");
+const queueCount = document.getElementById("queue-count");
+const queueStatus = document.getElementById("queue-status");
+const exportBtn = document.getElementById("export-queue");
+const clearBtn = document.getElementById("clear-queue");
+
+function setQueueStatus(msg, kind) {
+  queueStatus.textContent = msg;
+  queueStatus.className = "status" + (kind ? " " + kind : "");
+  if (kind === "success") {
+    setTimeout(() => {
+      if (queueStatus.textContent === msg) {
+        queueStatus.textContent = "";
+        queueStatus.className = "status";
+      }
+    }, 2500);
+  }
+}
+
+function renderQueue(queue) {
+  queueList.innerHTML = "";
+  queueCount.textContent = queue.length ? `(${queue.length})` : "";
+  queueEmpty.style.display = queue.length ? "none" : "block";
+  queue.forEach((item, idx) => {
+    const li = document.createElement("li");
+    li.className = "queue-item";
+    const left = document.createElement("div");
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "title";
+    titleDiv.textContent = item.title || "(no title)";
+    left.appendChild(titleDiv);
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const channel = item.channel ? `${item.channel} · ` : "";
+    const date = item.addedAt ? new Date(item.addedAt).toLocaleString() : "";
+    meta.appendChild(document.createTextNode(channel));
+    if (item.url) {
+      const a = document.createElement("a");
+      a.href = item.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = item.videoId || "open";
+      meta.appendChild(a);
+    }
+    if (date) meta.appendChild(document.createTextNode(` · ${date}`));
+    left.appendChild(meta);
+    li.appendChild(left);
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => removeQueueItem(idx));
+    li.appendChild(removeBtn);
+    queueList.appendChild(li);
+  });
+}
+
+function loadQueue() {
+  chrome.storage.local.get({ trainingQueue: [] }, (data) => {
+    renderQueue(Array.isArray(data.trainingQueue) ? data.trainingQueue : []);
+  });
+}
+
+function removeQueueItem(idx) {
+  chrome.storage.local.get({ trainingQueue: [] }, (data) => {
+    const queue = Array.isArray(data.trainingQueue) ? data.trainingQueue : [];
+    queue.splice(idx, 1);
+    chrome.storage.local.set({ trainingQueue: queue }, () => renderQueue(queue));
+  });
+}
+
+exportBtn.addEventListener("click", () => {
+  chrome.storage.local.get({ trainingQueue: [] }, (data) => {
+    const queue = Array.isArray(data.trainingQueue) ? data.trainingQueue : [];
+    const blob = new Blob([JSON.stringify(queue, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    a.download = `clickbait-training-queue-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setQueueStatus(`Exported ${queue.length} item${queue.length === 1 ? "" : "s"}.`, "success");
+  });
+});
+
+clearBtn.addEventListener("click", () => {
+  if (!confirm("Clear the entire training queue? This cannot be undone.")) return;
+  chrome.storage.local.set({ trainingQueue: [] }, () => {
+    renderQueue([]);
+    setQueueStatus("Queue cleared.", "success");
+  });
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.trainingQueue) {
+    renderQueue(changes.trainingQueue.newValue || []);
+  }
+});
+
 load();
+loadQueue();

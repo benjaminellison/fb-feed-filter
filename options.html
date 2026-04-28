@@ -69,6 +69,43 @@
     <span id="status" class="status"></span>
   </div>
 
+  <h2 style="margin-top: 40px;">Training queue <span id="queue-count" style="color: #666; font-weight: normal; font-size: 14px;"></span></h2>
+  <p class="subtitle">Right-click any video on YouTube and choose <em>Add to clickbait training queue</em>.</p>
+
+  <div id="queue-empty" class="subtitle" style="display: none; padding: 24px; text-align: center; background: #fff; border: 1px dashed #ddd; border-radius: 6px;">
+    Queue is empty.
+  </div>
+  <ul id="queue-list" style="list-style: none; padding: 0; margin: 0;"></ul>
+
+  <div class="toolbar" style="margin-top: 16px;">
+    <button id="export-queue">Export JSON</button>
+    <button id="clear-queue">Clear queue</button>
+    <span id="queue-status" class="status"></span>
+  </div>
+
+  <style>
+    .queue-item {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      align-items: start;
+    }
+    .queue-item .title { font-weight: 500; word-break: break-word; }
+    .queue-item .meta { font-size: 12px; color: #666; margin-top: 2px; }
+    .queue-item .meta a { color: #1976d2; text-decoration: none; }
+    .queue-item .meta a:hover { text-decoration: underline; }
+    .queue-item button {
+      padding: 4px 10px;
+      font-size: 12px;
+      align-self: start;
+    }
+  </style>
+
   <script src="defaults.js"></script>
   <script src="options.js"></script>
 </body>

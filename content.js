@@ -158,6 +158,89 @@ chrome.storage.onChanged.addListener((changes, area) => {
   scan();
 });
 
+let lastRightClickTarget = null;
+
+document.addEventListener(
+  "contextmenu",
+  (e) => {
+    const card = e.target.closest && e.target.closest(VIDEO_SELECTORS);
+    lastRightClickTarget = card || null;
+  },
+  true
+);
+
+function extractMetadata(el) {
+  const title = getTitle(el);
+  const watchLink = el.querySelector('a[href*="/watch?v="]');
+  const href = watchLink ? watchLink.getAttribute("href") || "" : "";
+  let url = "";
+  let videoId = "";
+  if (href) {
+    try {
+      const u = new URL(href, location.origin);
+      videoId = u.searchParams.get("v") || "";
+      url = u.toString();
+    } catch (_) {}
+  }
+  let channel = "";
+  const channelLink = el.querySelector(
+    'a[href^="/@"], a[href^="/channel/"], a[href^="/user/"]'
+  );
+  if (channelLink) channel = (channelLink.textContent || "").trim();
+  if (!channel) {
+    const avatarBtn = el.querySelector('[aria-label^="Go to channel "]');
+    if (avatarBtn) {
+      const m = (avatarBtn.getAttribute("aria-label") || "").match(
+        /^Go to channel (.+)$/
+      );
+      if (m) channel = m[1].trim();
+    }
+  }
+  return {
+    title,
+    channel,
+    url,
+    videoId,
+    addedAt: new Date().toISOString(),
+  };
+}
+
+function showToast(message) {
+  const t = document.createElement("div");
+  t.className = "cbf-toast";
+  t.textContent = message;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("cbf-toast-show"));
+  setTimeout(() => {
+    t.classList.remove("cbf-toast-show");
+    setTimeout(() => t.remove(), 300);
+  }, 2500);
+}
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (!msg || msg.type !== "cbf-capture-training") return;
+  if (!lastRightClickTarget || !lastRightClickTarget.isConnected) {
+    showToast("Right-click on a video card first.");
+    return;
+  }
+  const meta = extractMetadata(lastRightClickTarget);
+  if (!meta.title) {
+    showToast("Couldn't read video title from this card.");
+    return;
+  }
+  chrome.storage.local.get({ trainingQueue: [] }, (data) => {
+    const queue = Array.isArray(data.trainingQueue) ? data.trainingQueue : [];
+    if (meta.videoId && queue.some((q) => q.videoId === meta.videoId)) {
+      showToast(`Already queued: ${meta.title.slice(0, 60)}`);
+      return;
+    }
+    queue.push(meta);
+    chrome.storage.local.set({ trainingQueue: queue }, () => {
+      showToast(`Added (#${queue.length}): ${meta.title.slice(0, 60)}`);
+    });
+  });
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "h" || e.key === "H")) {
     const target = e.target;

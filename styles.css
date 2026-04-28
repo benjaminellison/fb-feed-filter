@@ -37,3 +37,27 @@ html.cbf-reveal-all .cbf-filtered > .cbf-overlay {
   font-style: italic;
   margin-top: 2px;
 }
+
+.cbf-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(33, 33, 33, 0.95);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 6px;
+  font-family: "Roboto", "YouTube Sans", sans-serif;
+  font-size: 14px;
+  max-width: 380px;
+  z-index: 99999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.cbf-toast.cbf-toast-show {
+  opacity: 1;
+  transform: translateY(0);
+}

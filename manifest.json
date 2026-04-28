@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Clickbait Filter",
-  "version": "0.2.0",
-  "description": "Hide clickbait videos on YouTube with translucent overlays. Editable rules.",
-  "permissions": ["storage"],
+  "version": "0.3.0",
+  "description": "Hide clickbait videos on YouTube with translucent overlays. Editable rules and training queue.",
+  "permissions": ["storage", "contextMenus"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true

@@ -1,12 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Clickbait Filter",
-  "version": "0.1.0",
-  "description": "Hide clickbait videos on YouTube with translucent overlays.",
+  "version": "0.2.0",
+  "description": "Hide clickbait videos on YouTube with translucent overlays. Editable rules.",
+  "permissions": ["storage"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["content.js"],
+      "js": ["defaults.js", "content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle",
       "all_frames": false

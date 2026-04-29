@@ -27,6 +27,8 @@ html.cbf-reveal-all .cbf-filtered > .cbf-overlay {
   padding: 8px 12px;
   pointer-events: none;
   user-select: none;
+  max-width: 90%;
+  word-break: break-word;
 }
 
 .cbf-overlay .cbf-label span {

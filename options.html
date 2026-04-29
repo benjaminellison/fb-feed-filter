@@ -49,16 +49,25 @@
 </head>
 <body>
   <h1>Clickbait Filter</h1>
-  <p class="subtitle">Edit the rule list as JSON. Changes take effect immediately on any open YouTube tab.</p>
+  <p class="subtitle">Each rule contributes a score when it matches. A card is filtered when the total score reaches the threshold. Changes take effect immediately on any open YouTube tab.</p>
+
+  <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin: 16px 0;">
+    <label for="threshold" style="font-weight: 600; display: block; margin-bottom: 6px;">Filter threshold</label>
+    <p class="subtitle" style="margin: 0 0 8px;">A title is hidden when the sum of its rule scores is ≥ this value.</p>
+    <input type="number" id="threshold" min="0" max="10" step="0.05" style="font-size: 14px; padding: 6px 8px; width: 120px;">
+    <button id="save-threshold" class="primary" style="margin-left: 8px;">Save threshold</button>
+    <span id="threshold-status" class="status"></span>
+  </div>
 
   <details>
     <summary>Rule schema</summary>
-    <p>Each rule is an object with a <code>name</code>, a <code>type</code>, and type-specific fields. <code>enabled</code> defaults to <code>true</code> if omitted.</p>
+    <p>Each rule has a <code>name</code>, a <code>type</code>, a <code>weight</code> (number; how much it contributes to the score), and type-specific fields. <code>enabled</code> defaults to <code>true</code>.</p>
     <ul>
-      <li><code>{ "type": "regex", "pattern": "...", "flags": "i" }</code> — matches title against a regex. Remember to double-escape backslashes in JSON (e.g. <code>\\b</code>).</li>
-      <li><code>{ "type": "caps_ratio", "threshold": 0.7, "minLetters": 15 }</code> — matches if more than <code>threshold</code> of the title's letters are uppercase, with a minimum letter count.</li>
-      <li><code>{ "type": "emoji_count", "threshold": 3 }</code> — matches if the title has at least <code>threshold</code> emoji.</li>
+      <li><code>{ "type": "regex", "pattern": "...", "flags": "i", "weight": 0.4 }</code> — adds <code>weight</code> if the regex matches at least once. Add <code>"perMatch": true</code> to instead add <code>weight × match_count</code> (useful for per-character scoring like exclamation points).</li>
+      <li><code>{ "type": "caps_ratio", "threshold": 0.7, "minLetters": 15, "weight": 0.5 }</code> — adds <code>weight</code> if more than <code>threshold</code> of the title's letters are uppercase (with a minimum letter count).</li>
+      <li><code>{ "type": "emoji_count", "threshold": 3, "weight": 0.4 }</code> — adds <code>weight</code> if the title contains at least <code>threshold</code> emoji.</li>
     </ul>
+    <p>Remember to double-escape backslashes in JSON (e.g. <code>\\b</code>, <code>\\?</code>).</p>
   </details>
 
   <textarea id="rules" spellcheck="false"></textarea>

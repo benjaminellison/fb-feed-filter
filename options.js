@@ -39,6 +39,9 @@ function validate(parsed) {
     if (seenNames.has(r.name)) return `${ctx}: duplicate name "${r.name}".`;
     seenNames.add(r.name);
     if (!validTypes.has(r.type)) return `${ctx} (${r.name}): invalid "type". Must be one of regex, caps_ratio, emoji_count.`;
+    if (r.weight !== undefined && (typeof r.weight !== "number" || !isFinite(r.weight))) {
+      return `${ctx} (${r.name}): "weight" must be a finite number.`;
+    }
     if (r.type === "regex") {
       if (typeof r.pattern !== "string") return `${ctx} (${r.name}): regex rule needs a string "pattern".`;
       try {
@@ -77,10 +80,46 @@ saveBtn.addEventListener("click", () => {
 });
 
 resetBtn.addEventListener("click", () => {
-  if (!confirm("Reset all rules to defaults? Your custom rules will be lost.")) return;
-  chrome.storage.local.set({ rules: DEFAULT_RULES }, () => {
+  if (!confirm("Reset all rules and threshold to defaults? Your custom rules will be lost.")) return;
+  chrome.storage.local.set({ rules: DEFAULT_RULES, threshold: DEFAULT_THRESHOLD }, () => {
     render(DEFAULT_RULES);
+    thresholdInput.value = DEFAULT_THRESHOLD;
     setStatus("Reset to defaults.", "success");
+  });
+});
+
+const thresholdInput = document.getElementById("threshold");
+const saveThresholdBtn = document.getElementById("save-threshold");
+const thresholdStatus = document.getElementById("threshold-status");
+
+function setThresholdStatus(msg, kind) {
+  thresholdStatus.textContent = msg;
+  thresholdStatus.className = "status" + (kind ? " " + kind : "");
+  if (kind === "success") {
+    setTimeout(() => {
+      if (thresholdStatus.textContent === msg) {
+        thresholdStatus.textContent = "";
+        thresholdStatus.className = "status";
+      }
+    }, 2500);
+  }
+}
+
+function loadThreshold() {
+  chrome.storage.local.get({ threshold: DEFAULT_THRESHOLD }, (data) => {
+    thresholdInput.value =
+      typeof data.threshold === "number" ? data.threshold : DEFAULT_THRESHOLD;
+  });
+}
+
+saveThresholdBtn.addEventListener("click", () => {
+  const v = parseFloat(thresholdInput.value);
+  if (!isFinite(v) || v < 0) {
+    setThresholdStatus("Threshold must be a non-negative number.", "error");
+    return;
+  }
+  chrome.storage.local.set({ threshold: v }, () => {
+    setThresholdStatus(`Saved threshold: ${v}`, "success");
   });
 });
 
@@ -188,4 +227,5 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 load();
+loadThreshold();
 loadQueue();

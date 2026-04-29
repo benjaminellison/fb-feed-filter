@@ -25,3 +25,6 @@ node_modules/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Legacy local-only queue file (superseded by in-extension training queue)
+to-train.json

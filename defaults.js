@@ -21,6 +21,13 @@ var DEFAULT_RULES = [
     enabled: true
   },
   {
+    name: "only-never-again",
+    type: "regex",
+    pattern: "(?=.*\\b(?:only|just)\\b)(?=.*\\bnever\\b.*\\bagain\\b)",
+    flags: "i",
+    enabled: true
+  },
+  {
     name: "all-caps-title",
     type: "caps_ratio",
     threshold: 0.7,

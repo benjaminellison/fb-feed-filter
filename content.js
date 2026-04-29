@@ -106,10 +106,27 @@ function applyOverlay(el, ruleName) {
 }
 
 function processVideo(el) {
-  if (el.querySelector(":scope > .cbf-overlay")) return;
   const title = getTitle(el);
   if (!title) return;
+  if (el.dataset.cbfTitle === title) return;
+  el.dataset.cbfTitle = title;
+
+  const existing = el.querySelector(":scope > .cbf-overlay");
   const matched = matchRule(title);
+
+  if (existing) {
+    if (!matched) {
+      el.classList.remove("cbf-filtered", "cbf-revealed");
+      delete el.dataset.cbfRule;
+      existing.remove();
+    } else if (el.dataset.cbfRule !== matched) {
+      el.dataset.cbfRule = matched;
+      const sub = existing.querySelector(".cbf-label span");
+      if (sub) sub.textContent = matched;
+    }
+    return;
+  }
+
   if (matched) {
     el.dataset.cbfRule = matched;
     applyOverlay(el, matched);
@@ -126,6 +143,9 @@ function clearOverlays() {
     delete el.dataset.cbfRule;
     const ov = el.querySelector(":scope > .cbf-overlay");
     if (ov) ov.remove();
+  });
+  document.querySelectorAll("[data-cbf-title]").forEach((el) => {
+    delete el.dataset.cbfTitle;
   });
 }
 

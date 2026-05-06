@@ -24,6 +24,7 @@ function compileRule(rule) {
           return {
             name: rule.name,
             score: (t) => {
+              if (!t) return 0;
               const matches = t.match(re);
               return matches ? matches.length * weight : 0;
             },
@@ -32,7 +33,7 @@ function compileRule(rule) {
           const re = new RegExp(rule.pattern, rule.flags || "");
           return {
             name: rule.name,
-            score: (t) => (re.test(t) ? weight : 0),
+            score: (t) => (t && re.test(t) ? weight : 0),
           };
         }
       } catch (e) {
@@ -46,6 +47,7 @@ function compileRule(rule) {
       return {
         name: rule.name,
         score: (t) => {
+          if (!t) return 0;
           const letters = t.replace(/[^a-zA-Z]/g, "");
           if (letters.length < minLetters) return 0;
           const upper = letters.replace(/[^A-Z]/g, "").length;
@@ -58,9 +60,27 @@ function compileRule(rule) {
       return {
         name: rule.name,
         score: (t) => {
+          if (!t) return 0;
           const count = (t.match(/\p{Extended_Pictographic}/gu) || []).length;
           return count >= minCount ? weight : 0;
         },
+      };
+    }
+    case "selector": {
+      const selector = rule.selector;
+      if (!selector || typeof selector !== "string") {
+        console.warn("[ClickbaitFilter] selector rule needs a 'selector' string:", rule.name);
+        return null;
+      }
+      try {
+        document.createDocumentFragment().querySelector(selector);
+      } catch (e) {
+        console.warn("[ClickbaitFilter] invalid selector in rule", rule.name, e.message);
+        return null;
+      }
+      return {
+        name: rule.name,
+        score: (_t, el) => (el && el.querySelector(selector) ? weight : 0),
       };
     }
     default:
@@ -73,11 +93,11 @@ function compileAll(rawRules) {
   return (rawRules || []).map(compileRule).filter(Boolean);
 }
 
-function scoreTitle(title) {
+function scoreCard(title, el) {
   let total = 0;
   const breakdown = [];
   for (const rule of activeRules) {
-    const s = rule.score(title);
+    const s = rule.score(title, el);
     if (s > 0) {
       total += s;
       breakdown.push({ name: rule.name, score: s });
@@ -155,12 +175,17 @@ function updateOverlayContent(overlay, total, breakdown) {
 
 function processVideo(el) {
   const title = getTitle(el);
-  if (!title) return;
-  if (el.dataset.cbfTitle === title) return;
-  el.dataset.cbfTitle = title;
+  let cacheKey = title;
+  if (!cacheKey) {
+    const adLink = el.querySelector('a[href]');
+    cacheKey = adLink ? "ad:" + (adLink.getAttribute("href") || "") : "";
+  }
+  if (!cacheKey) return;
+  if (el.dataset.cbfTitle === cacheKey) return;
+  el.dataset.cbfTitle = cacheKey;
 
   const existing = el.querySelector(":scope > .cbf-overlay");
-  const { total, breakdown } = scoreTitle(title);
+  const { total, breakdown } = scoreCard(title, el);
   const shouldFilter = total >= threshold;
 
   if (!shouldFilter) {

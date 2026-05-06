@@ -65,5 +65,12 @@ var DEFAULT_RULES = [
     weight: 0.1,
     perMatch: true,
     enabled: true
+  },
+  {
+    name: "sponsored",
+    type: "selector",
+    selector: "ytd-ad-slot-renderer, ytd-promoted-sparkles-web-renderer, ytd-in-feed-ad-layout-renderer",
+    weight: 1.0,
+    enabled: true
   }
 ];

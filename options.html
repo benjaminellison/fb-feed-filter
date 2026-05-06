@@ -66,6 +66,7 @@
       <li><code>{ "type": "regex", "pattern": "...", "flags": "i", "weight": 0.4 }</code> — adds <code>weight</code> if the regex matches at least once. Add <code>"perMatch": true</code> to instead add <code>weight × match_count</code> (useful for per-character scoring like exclamation points).</li>
       <li><code>{ "type": "caps_ratio", "threshold": 0.7, "minLetters": 15, "weight": 0.5 }</code> — adds <code>weight</code> if more than <code>threshold</code> of the title's letters are uppercase (with a minimum letter count).</li>
       <li><code>{ "type": "emoji_count", "threshold": 3, "weight": 0.4 }</code> — adds <code>weight</code> if the title contains at least <code>threshold</code> emoji.</li>
+      <li><code>{ "type": "selector", "selector": "ytd-ad-slot-renderer", "weight": 1.0 }</code> — adds <code>weight</code> if any descendant of the card matches the CSS selector. Useful for filtering by structure (e.g. sponsored cards, members-only badges) rather than title text.</li>
     </ul>
     <p>Remember to double-escape backslashes in JSON (e.g. <code>\\b</code>, <code>\\?</code>).</p>
   </details>

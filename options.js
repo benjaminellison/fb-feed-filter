@@ -29,7 +29,7 @@ function load() {
 
 function validate(parsed) {
   if (!Array.isArray(parsed)) return "Rules must be a JSON array.";
-  const validTypes = new Set(["regex", "caps_ratio", "emoji_count"]);
+  const validTypes = new Set(["regex", "caps_ratio", "emoji_count", "selector"]);
   const seenNames = new Set();
   for (let i = 0; i < parsed.length; i++) {
     const r = parsed[i];
@@ -38,7 +38,7 @@ function validate(parsed) {
     if (!r.name || typeof r.name !== "string") return `${ctx}: missing or invalid "name".`;
     if (seenNames.has(r.name)) return `${ctx}: duplicate name "${r.name}".`;
     seenNames.add(r.name);
-    if (!validTypes.has(r.type)) return `${ctx} (${r.name}): invalid "type". Must be one of regex, caps_ratio, emoji_count.`;
+    if (!validTypes.has(r.type)) return `${ctx} (${r.name}): invalid "type". Must be one of regex, caps_ratio, emoji_count, selector.`;
     if (r.weight !== undefined && (typeof r.weight !== "number" || !isFinite(r.weight))) {
       return `${ctx} (${r.name}): "weight" must be a finite number.`;
     }
@@ -48,6 +48,16 @@ function validate(parsed) {
         new RegExp(r.pattern, r.flags || "");
       } catch (e) {
         return `${ctx} (${r.name}): invalid regex — ${e.message}`;
+      }
+    }
+    if (r.type === "selector") {
+      if (typeof r.selector !== "string" || !r.selector.trim()) {
+        return `${ctx} (${r.name}): selector rule needs a non-empty "selector" string.`;
+      }
+      try {
+        document.createDocumentFragment().querySelector(r.selector);
+      } catch (e) {
+        return `${ctx} (${r.name}): invalid CSS selector — ${e.message}`;
       }
     }
   }

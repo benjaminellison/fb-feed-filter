@@ -4,9 +4,9 @@ function registerMenu() {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: MENU_ID,
-      title: "Add to clickbait training queue",
+      title: "Add post to training queue",
       contexts: ["all"],
-      documentUrlPatterns: ["*://*.youtube.com/*"],
+      documentUrlPatterns: ["*://*.facebook.com/*"],
     });
   });
 }

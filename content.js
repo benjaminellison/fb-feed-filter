@@ -1,13 +1,6 @@
-console.log("[ClickbaitFilter] content script loaded");
+console.log("[FBFeedFilter] content script loaded");
 
-const VIDEO_SELECTORS = [
-  "ytd-rich-item-renderer",
-  "ytd-video-renderer",
-  "ytd-grid-video-renderer",
-  "ytd-compact-video-renderer",
-].join(",");
-
-const TITLE_SELECTORS = "#video-title, a#video-title-link, yt-formatted-string#video-title";
+const POST_SELECTOR = "div[role='article']";
 
 let activeRules = [];
 let threshold = DEFAULT_THRESHOLD;
@@ -37,7 +30,7 @@ function compileRule(rule) {
           };
         }
       } catch (e) {
-        console.warn("[ClickbaitFilter] invalid regex in rule", rule.name, e.message);
+        console.warn("[FBFeedFilter] invalid regex in rule", rule.name, e.message);
         return null;
       }
     }
@@ -69,13 +62,13 @@ function compileRule(rule) {
     case "selector": {
       const selector = rule.selector;
       if (!selector || typeof selector !== "string") {
-        console.warn("[ClickbaitFilter] selector rule needs a 'selector' string:", rule.name);
+        console.warn("[FBFeedFilter] selector rule needs a 'selector' string:", rule.name);
         return null;
       }
       try {
         document.createDocumentFragment().querySelector(selector);
       } catch (e) {
-        console.warn("[ClickbaitFilter] invalid selector in rule", rule.name, e.message);
+        console.warn("[FBFeedFilter] invalid selector in rule", rule.name, e.message);
         return null;
       }
       return {
@@ -83,8 +76,41 @@ function compileRule(rule) {
         score: (_t, el) => (el && el.querySelector(selector) ? weight : 0),
       };
     }
+    case "text_selector": {
+      const selector = rule.selector;
+      const expected = rule.text;
+      if (!selector || typeof selector !== "string") {
+        console.warn("[FBFeedFilter] text_selector rule needs a 'selector' string:", rule.name);
+        return null;
+      }
+      if (typeof expected !== "string" || !expected) {
+        console.warn("[FBFeedFilter] text_selector rule needs a 'text' string:", rule.name);
+        return null;
+      }
+      try {
+        document.createDocumentFragment().querySelector(selector);
+      } catch (e) {
+        console.warn("[FBFeedFilter] invalid selector in rule", rule.name, e.message);
+        return null;
+      }
+      const caseSensitive = rule.caseSensitive === true;
+      const target = caseSensitive ? expected.trim() : expected.trim().toLowerCase();
+      return {
+        name: rule.name,
+        score: (_t, el) => {
+          if (!el) return 0;
+          const matches = el.querySelectorAll(selector);
+          for (const m of matches) {
+            const txt = (m.textContent || "").trim();
+            const cmp = caseSensitive ? txt : txt.toLowerCase();
+            if (cmp === target) return weight;
+          }
+          return 0;
+        },
+      };
+    }
     default:
-      console.warn("[ClickbaitFilter] unknown rule type:", rule.type);
+      console.warn("[FBFeedFilter] unknown rule type:", rule.type);
       return null;
   }
 }
@@ -93,11 +119,11 @@ function compileAll(rawRules) {
   return (rawRules || []).map(compileRule).filter(Boolean);
 }
 
-function scoreCard(title, el) {
+function scoreCard(snippet, el) {
   let total = 0;
   const breakdown = [];
   for (const rule of activeRules) {
-    const s = rule.score(title, el);
+    const s = rule.score(snippet, el);
     if (s > 0) {
       total += s;
       breakdown.push({ name: rule.name, score: s });
@@ -106,23 +132,33 @@ function scoreCard(title, el) {
   return { total, breakdown };
 }
 
-function getTitle(el) {
-  const h3 = el.querySelector("h3[title]");
-  if (h3) {
-    const t = h3.getAttribute("title");
-    if (t && t.trim()) return t.trim();
+function getProfileName(el) {
+  const h4Link = el.querySelector("h4 a[href], h3 a[href]");
+  if (h4Link) {
+    const t = (h4Link.textContent || "").trim();
+    if (t) return t;
   }
-  const direct = el.querySelector(TITLE_SELECTORS);
-  if (direct) {
-    const text = (direct.textContent || direct.getAttribute("title") || "").trim();
-    if (text) return text;
+  const hide = el.querySelector('[aria-label^="Hide post by "]');
+  if (hide) {
+    const m = (hide.getAttribute("aria-label") || "").match(/^Hide post by (.+)$/);
+    if (m) return m[1].trim();
   }
-  const titleLink = el.querySelector('a[class*="LockupMetadataViewModelTitle"]');
-  if (titleLink) {
-    const inner = titleLink.querySelector(".ytAttributedStringHost, span[role='text']");
-    const text = ((inner && inner.textContent) || titleLink.textContent || "").trim();
-    if (text) return text;
+  return "";
+}
+
+function getMessageSnippet(el) {
+  const msg = el.querySelector('[data-ad-comet-preview="message"], [data-ad-preview="message"]');
+  if (msg) {
+    const t = (msg.textContent || "").trim();
+    if (t) return t;
   }
+  return "";
+}
+
+function getCacheKey(el) {
+  const name = getProfileName(el);
+  const snippet = getMessageSnippet(el).slice(0, 120);
+  if (name || snippet) return name + "|" + snippet;
   return "";
 }
 
@@ -173,19 +209,23 @@ function updateOverlayContent(overlay, total, breakdown) {
   overlay.title = buildTooltip(total, breakdown);
 }
 
-function processVideo(el) {
-  const title = getTitle(el);
-  let cacheKey = title;
-  if (!cacheKey) {
-    const adLink = el.querySelector('a[href]');
-    cacheKey = adLink ? "ad:" + (adLink.getAttribute("href") || "") : "";
-  }
-  if (!cacheKey) return;
-  if (el.dataset.cbfTitle === cacheKey) return;
-  el.dataset.cbfTitle = cacheKey;
+function isTopLevelPost(el) {
+  const parent = el.parentElement;
+  if (!parent) return true;
+  return !parent.closest(POST_SELECTOR);
+}
 
+function processPost(el) {
+  if (!isTopLevelPost(el)) return;
+
+  const cacheKey = getCacheKey(el);
+  if (!cacheKey) return;
+  if (el.dataset.cbfKey === cacheKey) return;
+  el.dataset.cbfKey = cacheKey;
+
+  const snippet = getMessageSnippet(el);
   const existing = el.querySelector(":scope > .cbf-overlay");
-  const { total, breakdown } = scoreCard(title, el);
+  const { total, breakdown } = scoreCard(snippet, el);
   const shouldFilter = total >= threshold;
 
   if (!shouldFilter) {
@@ -209,7 +249,7 @@ function processVideo(el) {
 }
 
 function scan() {
-  document.querySelectorAll(VIDEO_SELECTORS).forEach(processVideo);
+  document.querySelectorAll(POST_SELECTOR).forEach(processPost);
 }
 
 function clearOverlays() {
@@ -220,8 +260,8 @@ function clearOverlays() {
     const ov = el.querySelector(":scope > .cbf-overlay");
     if (ov) ov.remove();
   });
-  document.querySelectorAll("[data-cbf-title]").forEach((el) => {
-    delete el.dataset.cbfTitle;
+  document.querySelectorAll("[data-cbf-key]").forEach((el) => {
+    delete el.dataset.cbfKey;
   });
 }
 
@@ -276,44 +316,21 @@ let lastRightClickTarget = null;
 document.addEventListener(
   "contextmenu",
   (e) => {
-    const card = e.target.closest && e.target.closest(VIDEO_SELECTORS);
+    const card = e.target.closest && e.target.closest(POST_SELECTOR);
     lastRightClickTarget = card || null;
   },
   true
 );
 
 function extractMetadata(el) {
-  const title = getTitle(el);
-  const watchLink = el.querySelector('a[href*="/watch?v="]');
-  const href = watchLink ? watchLink.getAttribute("href") || "" : "";
-  let url = "";
-  let videoId = "";
-  if (href) {
-    try {
-      const u = new URL(href, location.origin);
-      videoId = u.searchParams.get("v") || "";
-      url = u.toString();
-    } catch (_) {}
-  }
-  let channel = "";
-  const channelLink = el.querySelector(
-    'a[href^="/@"], a[href^="/channel/"], a[href^="/user/"]'
-  );
-  if (channelLink) channel = (channelLink.textContent || "").trim();
-  if (!channel) {
-    const avatarBtn = el.querySelector('[aria-label^="Go to channel "]');
-    if (avatarBtn) {
-      const m = (avatarBtn.getAttribute("aria-label") || "").match(
-        /^Go to channel (.+)$/
-      );
-      if (m) channel = m[1].trim();
-    }
-  }
+  const name = getProfileName(el);
+  const snippet = getMessageSnippet(el);
+  const permalink = el.querySelector('a[href*="/posts/"], a[href*="/photo/?fbid="], a[href*="/videos/"], a[href*="story_fbid="]');
+  const url = permalink ? permalink.href : "";
   return {
-    title,
-    channel,
+    profile: name,
+    snippet: snippet.slice(0, 300),
     url,
-    videoId,
     addedAt: new Date().toISOString(),
   };
 }
@@ -333,23 +350,20 @@ function showToast(message) {
 chrome.runtime.onMessage.addListener((msg) => {
   if (!msg || msg.type !== "cbf-capture-training") return;
   if (!lastRightClickTarget || !lastRightClickTarget.isConnected) {
-    showToast("Right-click on a video card first.");
+    showToast("Right-click on a post first.");
     return;
   }
   const meta = extractMetadata(lastRightClickTarget);
-  if (!meta.title) {
-    showToast("Couldn't read video title from this card.");
+  if (!meta.profile && !meta.snippet) {
+    showToast("Couldn't read post content.");
     return;
   }
   chrome.storage.local.get({ trainingQueue: [] }, (data) => {
     const queue = Array.isArray(data.trainingQueue) ? data.trainingQueue : [];
-    if (meta.videoId && queue.some((q) => q.videoId === meta.videoId)) {
-      showToast(`Already queued: ${meta.title.slice(0, 60)}`);
-      return;
-    }
     queue.push(meta);
     chrome.storage.local.set({ trainingQueue: queue }, () => {
-      showToast(`Added (#${queue.length}): ${meta.title.slice(0, 60)}`);
+      const label = meta.profile || meta.snippet.slice(0, 60);
+      showToast(`Added (#${queue.length}): ${label.slice(0, 60)}`);
     });
   });
 });

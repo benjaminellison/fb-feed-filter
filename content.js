@@ -1,6 +1,7 @@
 console.log("[FBFeedFilter] content script loaded");
 
 const POST_SELECTOR = "div[role='article']";
+const HIDE_POST_SELECTOR = '[aria-label^="Hide post by "]';
 
 let activeRules = [];
 let threshold = DEFAULT_THRESHOLD;
@@ -210,9 +211,12 @@ function updateOverlayContent(overlay, total, breakdown) {
 }
 
 function isTopLevelPost(el) {
-  const parent = el.parentElement;
-  if (!parent) return true;
-  return !parent.closest(POST_SELECTOR);
+  if (el.matches(POST_SELECTOR)) {
+    const parent = el.parentElement;
+    if (!parent) return true;
+    return !parent.closest(POST_SELECTOR);
+  }
+  return true;
 }
 
 function processPost(el) {
@@ -248,8 +252,37 @@ function processPost(el) {
   }
 }
 
+function findPostContainers() {
+  const containers = new Set();
+  document.querySelectorAll(POST_SELECTOR).forEach((el) => containers.add(el));
+  document.querySelectorAll(HIDE_POST_SELECTOR).forEach((btn) => {
+    const article = btn.closest(POST_SELECTOR);
+    if (article) {
+      containers.add(article);
+      return;
+    }
+    let node = btn.parentElement;
+    let depth = 0;
+    while (node && depth < 12) {
+      if (node.querySelector('[data-ad-comet-preview="message"], [data-ad-preview="message"]')) {
+        containers.add(node);
+        return;
+      }
+      node = node.parentElement;
+      depth++;
+    }
+  });
+  return containers;
+}
+
+let lastScanLog = 0;
 function scan() {
-  document.querySelectorAll(POST_SELECTOR).forEach(processPost);
+  const containers = findPostContainers();
+  if (Date.now() - lastScanLog > 5000) {
+    console.log(`[FBFeedFilter] scan: ${containers.size} post containers found, ${activeRules.length} rules active, threshold ${threshold}`);
+    lastScanLog = Date.now();
+  }
+  containers.forEach(processPost);
 }
 
 function clearOverlays() {
@@ -316,7 +349,24 @@ let lastRightClickTarget = null;
 document.addEventListener(
   "contextmenu",
   (e) => {
-    const card = e.target.closest && e.target.closest(POST_SELECTOR);
+    if (!e.target || !e.target.closest) {
+      lastRightClickTarget = null;
+      return;
+    }
+    let card = e.target.closest(POST_SELECTOR);
+    if (!card) {
+      const hideBtn = e.target.closest("*");
+      let node = hideBtn;
+      let depth = 0;
+      while (node && depth < 20) {
+        if (node.querySelector && node.querySelector(HIDE_POST_SELECTOR)) {
+          card = node;
+          break;
+        }
+        node = node.parentElement;
+        depth++;
+      }
+    }
     lastRightClickTarget = card || null;
   },
   true

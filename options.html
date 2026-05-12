@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Clickbait Filter — Options</title>
+  <title>Facebook Feed Filter — Options</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -48,8 +48,8 @@
   </style>
 </head>
 <body>
-  <h1>Clickbait Filter</h1>
-  <p class="subtitle">Each rule contributes a score when it matches. A card is filtered when the total score reaches the threshold. Changes take effect immediately on any open YouTube tab.</p>
+  <h1>Facebook Feed Filter</h1>
+  <p class="subtitle">Each rule contributes a score when it matches a post. A post is filtered when the total score reaches the threshold. Changes take effect immediately on any open Facebook tab.</p>
 
   <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 16px; margin: 16px 0;">
     <label for="threshold" style="font-weight: 600; display: block; margin-bottom: 6px;">Filter threshold</label>
@@ -61,12 +61,13 @@
 
   <details>
     <summary>Rule schema</summary>
-    <p>Each rule has a <code>name</code>, a <code>type</code>, a <code>weight</code> (number; how much it contributes to the score), and type-specific fields. <code>enabled</code> defaults to <code>true</code>.</p>
+    <p>Each rule has a <code>name</code>, a <code>type</code>, a <code>weight</code> (number; how much it contributes to the score), and type-specific fields. <code>enabled</code> defaults to <code>true</code>. Regex / caps / emoji rules run against the post's message-preview text; selector / text_selector rules run against the post DOM.</p>
     <ul>
-      <li><code>{ "type": "regex", "pattern": "...", "flags": "i", "weight": 0.4 }</code> — adds <code>weight</code> if the regex matches at least once. Add <code>"perMatch": true</code> to instead add <code>weight × match_count</code> (useful for per-character scoring like exclamation points).</li>
-      <li><code>{ "type": "caps_ratio", "threshold": 0.7, "minLetters": 15, "weight": 0.5 }</code> — adds <code>weight</code> if more than <code>threshold</code> of the title's letters are uppercase (with a minimum letter count).</li>
-      <li><code>{ "type": "emoji_count", "threshold": 3, "weight": 0.4 }</code> — adds <code>weight</code> if the title contains at least <code>threshold</code> emoji.</li>
-      <li><code>{ "type": "selector", "selector": "ytd-ad-slot-renderer", "weight": 1.0 }</code> — adds <code>weight</code> if any descendant of the card matches the CSS selector. Useful for filtering by structure (e.g. sponsored cards, members-only badges) rather than title text.</li>
+      <li><code>{ "type": "regex", "pattern": "...", "flags": "i", "weight": 0.4 }</code> — adds <code>weight</code> if the regex matches the post text. Add <code>"perMatch": true</code> for per-match scoring.</li>
+      <li><code>{ "type": "caps_ratio", "threshold": 0.7, "minLetters": 15, "weight": 0.5 }</code> — adds <code>weight</code> if more than <code>threshold</code> of the post text's letters are uppercase.</li>
+      <li><code>{ "type": "emoji_count", "threshold": 3, "weight": 0.4 }</code> — adds <code>weight</code> if the post text contains at least <code>threshold</code> emoji.</li>
+      <li><code>{ "type": "selector", "selector": "a[href*='l.facebook.com/l.php']", "weight": 1.0 }</code> — adds <code>weight</code> if any descendant of the post matches the CSS selector. Used to flag sponsored posts (they use Facebook's external-redirect domain).</li>
+      <li><code>{ "type": "text_selector", "selector": "h4 div[role='button']", "text": "Follow", "weight": 1.0 }</code> — adds <code>weight</code> if any element matching the selector has trimmed text equal to <code>text</code> (case-insensitive). Used to flag posts from pages you don't follow (visible "Follow" button).</li>
     </ul>
     <p>Remember to double-escape backslashes in JSON (e.g. <code>\\b</code>, <code>\\?</code>).</p>
   </details>
@@ -80,7 +81,7 @@
   </div>
 
   <h2 style="margin-top: 40px;">Training queue <span id="queue-count" style="color: #666; font-weight: normal; font-size: 14px;"></span></h2>
-  <p class="subtitle">Right-click any video on YouTube and choose <em>Add to clickbait training queue</em>.</p>
+  <p class="subtitle">Right-click any post on Facebook and choose <em>Add post to training queue</em>.</p>
 
   <div id="queue-empty" class="subtitle" style="display: none; padding: 24px; text-align: center; background: #fff; border: 1px dashed #ddd; border-radius: 6px;">
     Queue is empty.

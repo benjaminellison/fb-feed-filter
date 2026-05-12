@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Clickbait Filter",
-  "version": "0.3.0",
-  "description": "Hide clickbait videos on YouTube with translucent overlays. Editable rules and training queue.",
+  "name": "Facebook Feed Filter",
+  "version": "0.1.0",
+  "description": "Hide sponsored posts and unfollowed-page suggestions in your Facebook feed behind translucent overlays. Editable rules and training queue.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -19,7 +19,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
+      "matches": ["*://*.facebook.com/*"],
       "js": ["defaults.js", "content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle",

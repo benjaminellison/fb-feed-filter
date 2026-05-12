@@ -1,3 +1,14 @@
+.cbf-filtered {
+  max-height: 64px;
+  overflow: hidden;
+  transition: max-height 0.15s ease;
+}
+
+.cbf-filtered.cbf-revealed,
+html.cbf-reveal-all .cbf-filtered {
+  max-height: none;
+}
+
 .cbf-filtered > .cbf-overlay {
   position: absolute;
   inset: 0;
@@ -7,7 +18,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 8px;
   transition: opacity 0.15s ease;
 }
 

@@ -22,5 +22,13 @@ var DEFAULT_RULES = [
     text: "Follow",
     weight: 1.0,
     enabled: true
+  },
+  {
+    name: "join-suggestion",
+    type: "text_selector",
+    selector: "h4 div[role='button'], h3 div[role='button']",
+    text: "Join",
+    weight: 1.0,
+    enabled: true
   }
 ];

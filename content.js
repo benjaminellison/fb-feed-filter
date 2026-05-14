@@ -264,7 +264,7 @@ function findPostContainers() {
     let node = btn.parentElement;
     let depth = 0;
     while (node && depth < 12) {
-      if (node.querySelector('[data-ad-comet-preview="message"], [data-ad-preview="message"]')) {
+      if (node.querySelector('[data-ad-rendering-role="profile_name"], [data-ad-comet-preview="message"], [data-ad-preview="message"]')) {
         containers.add(node);
         return;
       }

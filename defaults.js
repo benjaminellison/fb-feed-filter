@@ -18,7 +18,7 @@ var DEFAULT_RULES = [
   {
     name: "follow-suggestion",
     type: "text_selector",
-    selector: "h4 div[role='button'], h3 div[role='button']",
+    selector: "div[role='button']",
     text: "Follow",
     weight: 1.0,
     enabled: true
@@ -26,7 +26,7 @@ var DEFAULT_RULES = [
   {
     name: "join-suggestion",
     type: "text_selector",
-    selector: "h4 div[role='button'], h3 div[role='button']",
+    selector: "div[role='button']",
     text: "Join",
     weight: 1.0,
     enabled: true

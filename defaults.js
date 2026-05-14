@@ -4,7 +4,7 @@ var DEFAULT_RULES = [
   {
     name: "sponsored-cta",
     type: "selector",
-    selector: "[data-ad-rendering-role='cta-']",
+    selector: "[data-ad-rendering-role^='cta-']",
     weight: 1.0,
     enabled: true
   },

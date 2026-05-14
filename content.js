@@ -95,6 +95,9 @@ function compileRule(rule) {
         return null;
       }
       const caseSensitive = rule.caseSensitive === true;
+      const matchType = rule.matchType === "contains" || rule.matchType === "startsWith"
+        ? rule.matchType
+        : "exact";
       const target = caseSensitive ? expected.trim() : expected.trim().toLowerCase();
       return {
         name: rule.name,
@@ -104,7 +107,13 @@ function compileRule(rule) {
           for (const m of matches) {
             const txt = (m.textContent || "").trim();
             const cmp = caseSensitive ? txt : txt.toLowerCase();
-            if (cmp === target) return weight;
+            if (matchType === "contains") {
+              if (cmp.includes(target)) return weight;
+            } else if (matchType === "startsWith") {
+              if (cmp.startsWith(target)) return weight;
+            } else {
+              if (cmp === target) return weight;
+            }
           }
           return 0;
         },

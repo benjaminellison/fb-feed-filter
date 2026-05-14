@@ -9,13 +9,6 @@ var DEFAULT_RULES = [
     enabled: true
   },
   {
-    name: "sponsored-redirect",
-    type: "selector",
-    selector: "a[href*='l.facebook.com/l.php']",
-    weight: 1.0,
-    enabled: true
-  },
-  {
     name: "follow-suggestion",
     type: "text_selector",
     selector: "div[role='button']",

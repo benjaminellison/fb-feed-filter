@@ -67,7 +67,7 @@
       <li><code>{ "type": "caps_ratio", "threshold": 0.7, "minLetters": 15, "weight": 0.5 }</code> — adds <code>weight</code> if more than <code>threshold</code> of the post text's letters are uppercase.</li>
       <li><code>{ "type": "emoji_count", "threshold": 3, "weight": 0.4 }</code> — adds <code>weight</code> if the post text contains at least <code>threshold</code> emoji.</li>
       <li><code>{ "type": "selector", "selector": "a[href*='l.facebook.com/l.php']", "weight": 1.0 }</code> — adds <code>weight</code> if any descendant of the post matches the CSS selector. Used to flag sponsored posts (they use Facebook's external-redirect domain).</li>
-      <li><code>{ "type": "text_selector", "selector": "h4 div[role='button']", "text": "Follow", "weight": 1.0 }</code> — adds <code>weight</code> if any element matching the selector has trimmed text equal to <code>text</code> (case-insensitive). Used to flag posts from pages you don't follow (visible "Follow" button).</li>
+      <li><code>{ "type": "text_selector", "selector": "h4 div[role='button']", "text": "Follow", "weight": 1.0 }</code> — adds <code>weight</code> if any element matching the selector has trimmed text equal to <code>text</code> (case-insensitive). Optional <code>"matchType": "contains"</code> or <code>"startsWith"</code> changes the comparison; default is exact match. Used to flag posts from pages you don't follow (visible "Follow" button).</li>
     </ul>
     <p>Remember to double-escape backslashes in JSON (e.g. <code>\\b</code>, <code>\\?</code>).</p>
   </details>

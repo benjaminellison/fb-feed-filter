@@ -9,6 +9,15 @@ var DEFAULT_RULES = [
     enabled: true
   },
   {
+    name: "sponsored-disclosure",
+    type: "text_selector",
+    selector: "div[role='button']",
+    text: "Sponsored",
+    matchType: "startsWith",
+    weight: 1.0,
+    enabled: true
+  },
+  {
     name: "follow-suggestion",
     type: "text_selector",
     selector: "div[role='button']",

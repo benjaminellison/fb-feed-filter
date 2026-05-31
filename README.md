@@ -21,15 +21,35 @@ Both rules fire at weight `1.0` with a threshold of `1.0`, so either signal alon
 
 Click the overlay to reveal that one post. Press **Alt+H** to reveal everything; press it again to re-hide. Hover the overlay for the full score breakdown.
 
-## Install (developer mode)
+## Install
 
-1. Clone this repo
-2. Open `chrome://extensions`
-3. Toggle on **Developer mode** (top right)
-4. Click **Load unpacked** → select the repo folder
-5. Open Facebook — sponsored posts and follow suggestions should start getting overlays
+Chrome doesn't have this extension in its Web Store, so you have to load it manually. It's only a few steps:
 
-To pick up code changes after editing: `chrome://extensions` → reload icon (↻) on the extension card → reload any open Facebook tabs.
+1. **Download the code as a ZIP.**
+   - At the top of this page, click the green **Code** button.
+   - In the menu that drops down, click **Download ZIP**. Your browser will save a file called `fb-feed-filter-main.zip` (probably to your Downloads folder).
+
+2. **Unzip it.**
+   - Find the ZIP in your Downloads folder.
+   - Right-click it and choose **Extract All...** (Windows) or double-click it (Mac).
+   - You'll get a folder called `fb-feed-filter-main`. Move it somewhere you won't accidentally delete — your Documents folder is fine. **Remember where you put it.**
+
+3. **Open Chrome's extensions page.**
+   - In Chrome, type `chrome://extensions` into the address bar and press Enter.
+
+4. **Turn on Developer mode.**
+   - Look in the top-right corner of that page for a switch labeled **Developer mode**. Click it on.
+
+5. **Load the extension.**
+   - Three buttons will appear near the top-left: **Load unpacked**, **Pack extension**, **Update**.
+   - Click **Load unpacked**.
+   - A file-picker window opens. Navigate to the `fb-feed-filter-main` folder you unzipped in step 2 and select it (don't go inside it — just highlight the folder and click **Select Folder**).
+
+6. **Done.** Open or refresh [facebook.com](https://www.facebook.com) — sponsored posts and follow suggestions should start getting overlays.
+
+### If you need to update the extension later
+
+If you download a new version of the ZIP, replace the old folder with the new one (keep the same location and name to make this easier), then go to `chrome://extensions` and click the circular reload arrow (↻) on the **Facebook Feed Filter** card. Refresh any open Facebook tabs.
 
 ## Configuring rules
 
